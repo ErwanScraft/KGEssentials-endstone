@@ -4,8 +4,8 @@
 
 gamemode:
   player_only: "{prefix} §cThis command can only be used by a player."
-  changed: "{prefix} §aYour gamemode has been changed to §e{mode}§a."
   already: "{prefix} §eYou are already in §6{mode}§e mode."
+  changed: "{prefix} §aYour gamemode has been changed to §e{mode}§a."
 
 spawn:
   player_only: "{prefix} §cThis command can only be used by a player."

@@ -4,17 +4,17 @@ from endstone.command import Command, CommandExecutor, CommandSender
 
 class GamemodeHandler(CommandExecutor):
     MODES = {
-        "gmc": GameMode.Creative,
-        "gms": GameMode.Survival,
-        "gma": GameMode.Adventure,
-        "gmsp": GameMode.Spectator,
+        "gmc": GameMode.CREATIVE,
+        "gms": GameMode.SURVIVAL,
+        "gma": GameMode.ADVENTURE,
+        "gmsp": GameMode.SPECTATOR,
     }
 
     MODE_NAMES = {
-        GameMode.Creative: "Creative",
-        GameMode.Survival: "Survival",
-        GameMode.Adventure: "Adventure",
-        GameMode.Spectator: "Spectator",
+        GameMode.CREATIVE: "Creative",
+        GameMode.SURVIVAL: "Survival",
+        GameMode.ADVENTURE: "Adventure",
+        GameMode.SPECTATOR: "Spectator",
     }
 
     def __init__(self, plugin) -> None:
@@ -32,13 +32,18 @@ class GamemodeHandler(CommandExecutor):
             return False
 
         if not isinstance(sender, Player):
-            sender.send_message(self.plugin.messages["player_only"])
+            sender.send_message(
+                self.plugin.messages.format("gamemode.player_only")
+            )
             return False
+
+        mode_name = self.MODE_NAMES[mode]
 
         if sender.game_mode == mode:
             sender.send_message(
-                self.plugin.messages["already_in_mode"].format(
-                    mode=self.MODE_NAMES[mode]
+                self.plugin.messages.format(
+                    "gamemode.already",
+                    mode=mode_name,
                 )
             )
             return True
@@ -46,8 +51,9 @@ class GamemodeHandler(CommandExecutor):
         sender.game_mode = mode
 
         sender.send_message(
-            self.plugin.messages["gamemode_changed"].format(
-                mode=self.MODE_NAMES[mode]
+            self.plugin.messages.format(
+                "gamemode.changed",
+                mode=mode_name,
             )
         )
 

@@ -1,8 +1,7 @@
 from endstone.plugin import Plugin
-from pathlib import Path
 
-from .utils.config import load_config
-from .utils.messages import load_messages
+from .utils.config import KGEssentialsConfig
+from .utils.messages import KGEssentialsMessages
 
 from .features.gamemode.handler import GamemodeHandler
 from .features.spawn.handler import SpawnHandler
@@ -64,6 +63,7 @@ class KGEssentials(Plugin):
     
         self._messages = KGEssentialsMessages(self)
         self._messages.load()
+        self.messages = self._messages
     
         self.prefix = self._config_manager.get("prefix", "KGEssentials")
     

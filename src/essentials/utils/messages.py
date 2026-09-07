@@ -20,4 +20,34 @@ class KGEssentialsMessages:
         self.data = data
 
     def get(self, key: str, default: str = "") -> str:
-        return self.data.get(key, default)
+        value = self.data
+
+        for part in key.split("."):
+            if not isinstance(value, dict):
+                return default
+
+            value = value.get(part)
+
+            if value is None:
+                return default
+
+        if not isinstance(value, str):
+            return default
+
+        return value
+
+    def format(self, key: str, **kwargs) -> str:
+        message = self.get(key)
+
+        if not message:
+            return ""
+
+        values = {
+            "prefix": self.plugin._config_manager.get(
+                "prefix",
+                "KGEssentials",
+            ),
+            **kwargs,
+        }
+
+        return message.format(**values)

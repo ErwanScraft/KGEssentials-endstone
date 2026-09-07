@@ -13,17 +13,23 @@ class SpawnHandler(CommandExecutor):
         args: list[str],
     ) -> bool:
         if not isinstance(sender, Player):
-            sender.send_message(self.plugin.messages["player_only"])
+            sender.send_message(
+                self.plugin.messages.format("spawn.player_only")
+            )
             return False
 
         spawn = sender.world.spawn_location
 
         if spawn is None:
-            sender.send_message(self.plugin.messages["spawn_unavailable"])
+            sender.send_message(
+                self.plugin.messages.format("spawn.unavailable")
+            )
             return False
 
         sender.teleport(spawn)
 
-        sender.send_message(self.plugin.messages["teleported_to_spawn"])
+        sender.send_message(
+            self.plugin.messages.format("spawn.teleported")
+        )
 
         return True

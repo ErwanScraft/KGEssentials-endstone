@@ -16,3 +16,7 @@ kg-essentials = "essentials:KGEssentials"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/essentials"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"resources/config.yml" = "serverbridge/config.yml"
+"resources/message.yml" = "serverbridge/message.yml"
