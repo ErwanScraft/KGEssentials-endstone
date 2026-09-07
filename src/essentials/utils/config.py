@@ -210,6 +210,13 @@ class ConfigManager:
         if isinstance(value, (int, float)):
             return str(value)
 
+        if isinstance(value, str):
+            return yaml.safe_dump(
+                value,
+                default_flow_style=True,
+                allow_unicode=True,
+            ).splitlines()[0]
+        
         return yaml.safe_dump(
             value,
             default_flow_style=True,
