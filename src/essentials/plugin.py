@@ -41,6 +41,11 @@ class KGEssentials(Plugin):
             "usages": ["/spawn"],
             "permissions": ["kgessentials.spawn"],
         },
+        "setspawn": {
+            "description": "Set the server spawn to your current location.",
+            "usages": ["/setspawn"],
+            "permissions": ["kgessentials.setspawn"],
+        },
     }
 
     permissions = {
@@ -52,6 +57,10 @@ class KGEssentials(Plugin):
             "description": "Allows the use of the spawn command.",
             "default": "true",
         },
+        "kgessentials.setspawn": {
+            "description": "Allows setting the server spawn.",
+            "default": "op",
+        },
     }
 
     def on_enable(self) -> None:
@@ -60,6 +69,7 @@ class KGEssentials(Plugin):
     
         self._config_manager = KGEssentialsConfig(self)
         self._config_manager.load()
+        self.config = self._config_manager
     
         self._messages = KGEssentialsMessages(self)
         self._messages.load()
@@ -69,6 +79,11 @@ class KGEssentials(Plugin):
     
         self.gamemode_handler = GamemodeHandler(self)
         self.spawn_handler = SpawnHandler(self)
+        
+        setspawn_command = self.get_command("setspawn")
+
+        if setspawn_command is not None:
+            setspawn_command.executor = self.spawn_handler
     
         for command_name in ("gmc", "gms", "gma", "gmsp"):
             command = self.get_command(command_name)

@@ -10,4 +10,5 @@ gamemode:
 spawn:
   player_only: "{prefix} §cThis command can only be used by a player."
   unavailable: "{prefix} §cServer spawn is not available."
+  set: "{prefix} §aServer spawn has been set."
   teleported: "{prefix} §aYou have been teleported to spawn."
