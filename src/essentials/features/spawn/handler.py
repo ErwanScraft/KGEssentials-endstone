@@ -40,7 +40,7 @@ class SpawnHandler(CommandExecutor):
     ) -> bool:
         location = player.location
 
-        self.plugin.spawn_config.update_values(
+        self.plugin.spawn_data.update_values(
             {
                 "dimension": location.dimension.name,
                 "x": location.x,
@@ -63,7 +63,7 @@ class SpawnHandler(CommandExecutor):
         self,
         player: Player,
     ) -> bool:
-        dimension_name = self.plugin.spawn_config.get(
+        dimension_name = self.plugin.spawn_data.get(
             "dimension"
         )
 
@@ -89,22 +89,22 @@ class SpawnHandler(CommandExecutor):
             location = Location(
                 dimension,
                 float(
-                    self.plugin.spawn_config.get("x")
+                    self.plugin.spawn_data.get("x")
                 ),
                 float(
-                    self.plugin.spawn_config.get("y")
+                    self.plugin.spawn_data.get("y")
                 ),
                 float(
-                    self.plugin.spawn_config.get("z")
+                    self.plugin.spawn_data.get("z")
                 ),
                 float(
-                    self.plugin.spawn_config.get(
+                    self.plugin.spawn_data.get(
                         "pitch",
                         0.0,
                     )
                 ),
                 float(
-                    self.plugin.spawn_config.get(
+                    self.plugin.spawn_data.get(
                         "yaw",
                         0.0,
                     )

@@ -67,29 +67,29 @@ class KGEssentials(Plugin):
     def on_enable(self) -> None:
         self.save_resources("config.yml")
         self.save_resources("message.yml")
-        self.save_resources("spawn.yml")
-
-        self.config = ConfigManager(self)
-        self.config.load()
-
-        self.spawn_config = ConfigManager(
+        self.save_resources("data/spawn.yml")
+    
+        self.config_manager = ConfigManager(self)
+        self.config_manager.load()
+        
+        self.spawn_data = ConfigManager(
             self,
-            "spawn.yml",
+            "data/spawn.yml",
         )
-        self.spawn_config.load()
-
+        self.spawn_data.load()
+        
         self._messages = KGEssentialsMessages(self)
         self._messages.load()
         self.messages = self._messages
-
-        self.prefix = self.config.get(
+        
+        self.prefix = self.config_manager.get(
             "prefix",
             "KGEssentials",
         )
-
+    
         self.gamemode_handler = GamemodeHandler(self)
         self.spawn_handler = SpawnHandler(self)
-
+    
         for command_name in (
             "gmc",
             "gms",
@@ -97,19 +97,19 @@ class KGEssentials(Plugin):
             "gmsp",
         ):
             command = self.get_command(command_name)
-
+    
             if command is not None:
                 command.executor = self.gamemode_handler
-
+    
         for command_name in (
             "spawn",
             "setspawn",
         ):
             command = self.get_command(command_name)
-
+    
             if command is not None:
                 command.executor = self.spawn_handler
-
+    
         self.logger.info("KGEssentials enabled.")
 
     def on_command(

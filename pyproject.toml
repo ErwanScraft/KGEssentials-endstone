@@ -20,4 +20,4 @@ packages = ["src/essentials"]
 [tool.hatch.build.targets.wheel.force-include]
 "resources/config.yml" = "essentials/config.yml"
 "resources/message.yml" = "essentials/message.yml"
-"resources/spawn.yml" = "essentials/spawn.yml"
+"resources/data/spawn.yml" = "essentials/data/spawn.yml"
