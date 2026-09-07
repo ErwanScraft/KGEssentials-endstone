@@ -4,3 +4,7 @@
 
 # Plugin prefix used in messages.
 prefix: "KGEssentials"
+
+spawn:
+  # Cooldown for /spawn in seconds.
+  cooldown: 10

@@ -1,3 +1,5 @@
+import time
+
 from endstone import Player
 from endstone.command import (
     Command,
@@ -11,6 +13,7 @@ class SpawnHandler(CommandExecutor):
     def __init__(self, plugin) -> None:
         super().__init__()
         self.plugin = plugin
+        self._cooldowns: dict[object, float] = {}
 
     def on_command(
         self,
@@ -20,9 +23,7 @@ class SpawnHandler(CommandExecutor):
     ) -> bool:
         if not isinstance(sender, Player):
             sender.send_message(
-                self.plugin.messages.format(
-                    "spawn.player_only"
-                )
+                self.plugin.messages.format("callback.player_only")
             )
             return False
 
@@ -121,6 +122,34 @@ class SpawnHandler(CommandExecutor):
             )
             return False
 
+        cooldown = self.plugin.config_manager.get(
+            "spawn.cooldown",
+            10,
+        )
+
+        try:
+            cooldown = float(cooldown)
+        except (TypeError, ValueError):
+            cooldown = 10.0
+
+        cooldown = max(0.0, cooldown)
+
+        player_id = player.unique_id
+        now = time.monotonic()
+        last_used = self._cooldowns.get(player_id)
+
+        if last_used is not None:
+            remaining = cooldown - (now - last_used)
+
+            if remaining > 0:
+                player.send_message(
+                    self.plugin.messages.format(
+                        "spawn.cooldown",
+                        time=max(1, round(remaining)),
+                    )
+                )
+                return False
+
         if not player.teleport(location):
             player.send_message(
                 self.plugin.messages.format(
@@ -128,6 +157,9 @@ class SpawnHandler(CommandExecutor):
                 )
             )
             return False
+
+        if cooldown > 0:
+            self._cooldowns[player_id] = time.monotonic()
 
         player.send_message(
             self.plugin.messages.format(

@@ -2,13 +2,15 @@
 # KGEssentials Messages
 # ==================================================
 
-gamemode:
+callback:
   player_only: "{prefix} §cThis command can only be used by a player."
-  already: "{prefix} §eYou are already in §6{mode}§e mode."
-  changed: "{prefix} §aYour gamemode has been changed to §e{mode}§a."
+
+gamemode:
+  already: "{prefix} §7You are already in §f{mode}§7 mode."
+  changed: "{prefix} §aYour gamemode has been changed to §f{mode}§a."
 
 spawn:
-  player_only: "{prefix} §cThis command can only be used by a player."
   unavailable: "{prefix} §cServer spawn is not available."
   set: "{prefix} §aServer spawn has been set."
   teleported: "{prefix} §aYou have been teleported to spawn."
+  cooldown: "{prefix} §7Please wait §f{time}s §7before using §f/spawn§7 again."

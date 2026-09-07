@@ -34,7 +34,7 @@ class GamemodeHandler(CommandExecutor):
 
         if not isinstance(sender, Player):
             sender.send_message(
-                self.plugin.messages.format("gamemode.player_only")
+                self.plugin.messages.format("callback.player_only")
             )
             return False
 

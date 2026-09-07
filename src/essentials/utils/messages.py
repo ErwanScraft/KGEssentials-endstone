@@ -58,7 +58,7 @@ class KGEssentialsMessages:
             return ""
 
         values = {
-            "prefix": self.plugin.config.get(
+            "prefix": self.plugin.config_manager.get(
                 "prefix",
                 "KGEssentials",
             ),
