@@ -7,7 +7,10 @@ class KGEssentialsConfig:
         self.data: dict = {}
 
     def load(self) -> None:
-        with self.path.open("r", encoding="utf-8") as file:
+        with self.path.open(
+            "r",
+            encoding="utf-8",
+        ) as file:
             config = yaml.safe_load(file) or {}
 
         if not isinstance(config, dict):
@@ -37,7 +40,10 @@ class KGEssentialsConfig:
     ) -> None:
         self.get_feature(name)
 
-        self._update_yaml_values(name, values)
+        self._update_yaml_values(
+            name,
+            values,
+        )
 
         self.data[name].update(values)
 

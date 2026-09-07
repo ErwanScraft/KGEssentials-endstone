@@ -1,5 +1,9 @@
 from endstone import Player
-from endstone.command import Command, CommandExecutor, CommandSender
+from endstone.command import (
+    Command,
+    CommandExecutor,
+    CommandSender,
+)
 from endstone.level import Location
 
 
@@ -30,10 +34,13 @@ class SpawnHandler(CommandExecutor):
 
         return False
 
-    def _set_spawn(self, player: Player) -> bool:
+    def _set_spawn(
+        self,
+        player: Player,
+    ) -> bool:
         location = player.location
 
-        self.plugin.config.update_feature(
+        self.plugin.kg_config.update_feature(
             "spawn",
             {
                 "dimension": location.dimension.name,
@@ -53,8 +60,11 @@ class SpawnHandler(CommandExecutor):
 
         return True
 
-    def _spawn(self, player: Player) -> bool:
-        spawn = self.plugin.config.get(
+    def _spawn(
+        self,
+        player: Player,
+    ) -> bool:
+        spawn = self.plugin.kg_config.get(
             "spawn"
         )
 
@@ -70,7 +80,13 @@ class SpawnHandler(CommandExecutor):
             "dimension"
         )
 
-        if not isinstance(dimension_name, str):
+        if (
+            not isinstance(
+                dimension_name,
+                str,
+            )
+            or not dimension_name
+        ):
             player.send_message(
                 self.plugin.messages.format(
                     "spawn.unavailable"

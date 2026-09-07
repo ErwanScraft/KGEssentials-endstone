@@ -5,14 +5,13 @@
 # Plugin prefix used in messages.
 prefix: "KGEssentials"
 
-# Server spawn location.
+# KGEssentials spawn location.
 #
-# This location is set using /setspawn.
-# Do not edit this manually unless necessary.
+# Use /setspawn in-game to set this location.
 spawn:
-  dimension: "overworld"
+  dimension: ""
   x: 0.0
-  y: 64.0
+  y: 0.0
   z: 0.0
   pitch: 0.0
   yaw: 0.0

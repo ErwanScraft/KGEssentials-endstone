@@ -1,3 +1,4 @@
+from endstone.command import Command, CommandSender
 from endstone.plugin import Plugin
 
 from .utils.config import KGEssentialsConfig
@@ -42,7 +43,7 @@ class KGEssentials(Plugin):
             "permissions": ["kgessentials.spawn"],
         },
         "setspawn": {
-            "description": "Set the server spawn to your current location.",
+            "description": "Set the KGEssentials spawn to your current location.",
             "usages": ["/setspawn"],
             "permissions": ["kgessentials.setspawn"],
         },
@@ -58,7 +59,7 @@ class KGEssentials(Plugin):
             "default": "true",
         },
         "kgessentials.setspawn": {
-            "description": "Allows setting the server spawn.",
+            "description": "Allows setting the KGEssentials spawn.",
             "default": "op",
         },
     }
@@ -66,34 +67,48 @@ class KGEssentials(Plugin):
     def on_enable(self) -> None:
         self.save_resources("config.yml")
         self.save_resources("message.yml")
-    
-        self._config_manager = KGEssentialsConfig(self)
-        self._config_manager.load()
-        self.config = self._config_manager
-    
+
+        self.kg_config = KGEssentialsConfig(self)
+        self.kg_config.load()
+
         self._messages = KGEssentialsMessages(self)
         self._messages.load()
         self.messages = self._messages
-    
-        self.prefix = self._config_manager.get("prefix", "KGEssentials")
-    
+
+        self.prefix = self.kg_config.get(
+            "prefix",
+            "KGEssentials",
+        )
+
         self.gamemode_handler = GamemodeHandler(self)
         self.spawn_handler = SpawnHandler(self)
-        
-        setspawn_command = self.get_command("setspawn")
 
-        if setspawn_command is not None:
-            setspawn_command.executor = self.spawn_handler
-    
-        for command_name in ("gmc", "gms", "gma", "gmsp"):
+        for command_name in (
+            "gmc",
+            "gms",
+            "gma",
+            "gmsp",
+        ):
             command = self.get_command(command_name)
-    
+
             if command is not None:
                 command.executor = self.gamemode_handler
-    
-        spawn_command = self.get_command("spawn")
-    
-        if spawn_command is not None:
-            spawn_command.executor = self.spawn_handler
-    
+
+        for command_name in (
+            "spawn",
+            "setspawn",
+        ):
+            command = self.get_command(command_name)
+
+            if command is not None:
+                command.executor = self.spawn_handler
+
         self.logger.info("KGEssentials enabled.")
+
+    def on_command(
+        self,
+        sender: CommandSender,
+        command: Command,
+        args: list[str],
+    ) -> bool:
+        return False
