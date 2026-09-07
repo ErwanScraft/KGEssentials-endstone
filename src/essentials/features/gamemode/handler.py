@@ -18,6 +18,7 @@ class GamemodeHandler(CommandExecutor):
     }
 
     def __init__(self, plugin) -> None:
+        super().__init__()
         self.plugin = plugin
 
     def on_command(

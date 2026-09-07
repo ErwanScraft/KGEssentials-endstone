@@ -4,6 +4,7 @@ from endstone.command import Command, CommandExecutor, CommandSender
 
 class SpawnHandler(CommandExecutor):
     def __init__(self, plugin) -> None:
+        super().__init__()
         self.plugin = plugin
 
     def on_command(
