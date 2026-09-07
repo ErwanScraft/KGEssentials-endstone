@@ -1,8 +1,11 @@
 from endstone.plugin import Plugin
+from pathlib import Path
+
+from .utils.config import load_config
+from .utils.messages import load_messages
 
 from .features.gamemode.handler import GamemodeHandler
 from .features.spawn.handler import SpawnHandler
-from .utils.messages import DEFAULT_MESSAGES
 
 
 class KGEssentials(Plugin):
@@ -53,16 +56,29 @@ class KGEssentials(Plugin):
     }
 
     def on_enable(self) -> None:
-        self.messages = DEFAULT_MESSAGES.copy()
-
+        self.save_resources("config.yml")
+        self.save_resources("message.yml")
+    
+        self._config_manager = KGEssentialsConfig(self)
+        self._config_manager.load()
+    
+        self._messages = KGEssentialsMessages(self)
+        self._messages.load()
+    
+        self.prefix = self._config_manager.get("prefix", "KGEssentials")
+    
         self.gamemode_handler = GamemodeHandler(self)
-        
         self.spawn_handler = SpawnHandler(self)
-
+    
         for command_name in ("gmc", "gms", "gma", "gmsp"):
             command = self.get_command(command_name)
-
+    
             if command is not None:
                 command.executor = self.gamemode_handler
-
+    
+        spawn_command = self.get_command("spawn")
+    
+        if spawn_command is not None:
+            spawn_command.executor = self.spawn_handler
+    
         self.logger.info("KGEssentials enabled.")

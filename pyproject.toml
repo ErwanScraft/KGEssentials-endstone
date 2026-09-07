@@ -15,4 +15,4 @@ dependencies = [
 kg-essentials = "essentials:KGEssentials"
 
 [tool.hatch.build.targets.wheel]
-packages = ["essentials"]
+packages = ["src/essentials"]
