@@ -9,17 +9,28 @@ class KGEssentialsMessages:
         self.data: dict = {}
 
     def load(self) -> None:
-        path = Path(self.plugin.data_folder) / "message.yml"
+        path = Path(
+            self.plugin.data_folder
+        ) / "message.yml"
 
-        with path.open("r", encoding="utf-8") as file:
+        with path.open(
+            "r",
+            encoding="utf-8",
+        ) as file:
             data = yaml.safe_load(file) or {}
 
         if not isinstance(data, dict):
-            raise ValueError("message.yml must contain a YAML mapping.")
+            raise ValueError(
+                "message.yml must contain a YAML mapping."
+            )
 
         self.data = data
 
-    def get(self, key: str, default: str = "") -> str:
+    def get(
+        self,
+        key: str,
+        default: str = "",
+    ) -> str:
         value = self.data
 
         for part in key.split("."):
@@ -36,14 +47,18 @@ class KGEssentialsMessages:
 
         return value
 
-    def format(self, key: str, **kwargs) -> str:
+    def format(
+        self,
+        key: str,
+        **kwargs,
+    ) -> str:
         message = self.get(key)
 
         if not message:
             return ""
 
         values = {
-            "prefix": self.plugin._config_manager.get(
+            "prefix": self.plugin.config.get(
                 "prefix",
                 "KGEssentials",
             ),

@@ -40,8 +40,7 @@ class SpawnHandler(CommandExecutor):
     ) -> bool:
         location = player.location
 
-        self.plugin.kg_config.update_feature(
-            "spawn",
+        self.plugin.spawn_config.update_values(
             {
                 "dimension": location.dimension.name,
                 "x": location.x,
@@ -49,7 +48,7 @@ class SpawnHandler(CommandExecutor):
                 "z": location.z,
                 "pitch": location.pitch,
                 "yaw": location.yaw,
-            },
+            }
         )
 
         player.send_message(
@@ -64,19 +63,7 @@ class SpawnHandler(CommandExecutor):
         self,
         player: Player,
     ) -> bool:
-        spawn = self.plugin.kg_config.get(
-            "spawn"
-        )
-
-        if not isinstance(spawn, dict):
-            player.send_message(
-                self.plugin.messages.format(
-                    "spawn.unavailable"
-                )
-            )
-            return False
-
-        dimension_name = spawn.get(
+        dimension_name = self.plugin.spawn_config.get(
             "dimension"
         )
 
@@ -101,14 +88,29 @@ class SpawnHandler(CommandExecutor):
 
             location = Location(
                 dimension,
-                float(spawn["x"]),
-                float(spawn["y"]),
-                float(spawn["z"]),
-                float(spawn.get("pitch", 0.0)),
-                float(spawn.get("yaw", 0.0)),
+                float(
+                    self.plugin.spawn_config.get("x")
+                ),
+                float(
+                    self.plugin.spawn_config.get("y")
+                ),
+                float(
+                    self.plugin.spawn_config.get("z")
+                ),
+                float(
+                    self.plugin.spawn_config.get(
+                        "pitch",
+                        0.0,
+                    )
+                ),
+                float(
+                    self.plugin.spawn_config.get(
+                        "yaw",
+                        0.0,
+                    )
+                ),
             )
         except (
-            KeyError,
             TypeError,
             ValueError,
         ):

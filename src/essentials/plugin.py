@@ -1,7 +1,7 @@
 from endstone.command import Command, CommandSender
 from endstone.plugin import Plugin
 
-from .utils.config import KGEssentialsConfig
+from .utils.config import ConfigManager
 from .utils.messages import KGEssentialsMessages
 
 from .features.gamemode.handler import GamemodeHandler
@@ -67,15 +67,22 @@ class KGEssentials(Plugin):
     def on_enable(self) -> None:
         self.save_resources("config.yml")
         self.save_resources("message.yml")
+        self.save_resources("spawn.yml")
 
-        self.kg_config = KGEssentialsConfig(self)
-        self.kg_config.load()
+        self.config = ConfigManager(self)
+        self.config.load()
+
+        self.spawn_config = ConfigManager(
+            self,
+            "spawn.yml",
+        )
+        self.spawn_config.load()
 
         self._messages = KGEssentialsMessages(self)
         self._messages.load()
         self.messages = self._messages
 
-        self.prefix = self.kg_config.get(
+        self.prefix = self.config.get(
             "prefix",
             "KGEssentials",
         )

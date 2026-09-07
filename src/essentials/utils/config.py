@@ -1,9 +1,13 @@
 import yaml
 
 
-class KGEssentialsConfig:
-    def __init__(self, plugin) -> None:
-        self.path = plugin.data_folder / "config.yml"
+class ConfigManager:
+    def __init__(
+        self,
+        plugin,
+        filename: str = "config.yml",
+    ) -> None:
+        self.path = plugin.data_folder / filename
         self.data: dict = {}
 
     def load(self) -> None:
@@ -15,64 +19,87 @@ class KGEssentialsConfig:
 
         if not isinstance(config, dict):
             raise ValueError(
-                "config.yml must contain a YAML mapping."
+                f"{self.path.name} must contain a YAML mapping."
             )
 
         self.data = config
 
-    def get(self, key: str, default=None):
-        return self.data.get(key, default)
-
-    def get_feature(self, name: str) -> dict:
-        feature = self.data.get(name)
-
-        if not isinstance(feature, dict):
-            raise ValueError(
-                f"'{name}' must be a YAML mapping."
-            )
-
-        return feature
-
-    def update_feature(
+    def get(
         self,
-        name: str,
+        key: str,
+        default=None,
+    ):
+        value = self.data
+
+        for part in key.split("."):
+            if not isinstance(value, dict):
+                return default
+
+            if part not in value:
+                return default
+
+            value = value[part]
+
+        return value
+
+    def update(
+        self,
+        section: str,
         values: dict,
     ) -> None:
-        self.get_feature(name)
+        current = self.get(section)
 
-        self._update_yaml_values(
-            name,
+        if not isinstance(current, dict):
+            raise ValueError(
+                f"'{section}' must be a YAML mapping."
+            )
+
+        self._update_yaml_section(
+            section,
             values,
         )
 
-        self.data[name].update(values)
+        current.update(values)
 
-    def _update_yaml_values(
+    def update_values(
         self,
-        feature_name: str,
+        values: dict,
+    ) -> None:
+        if not isinstance(values, dict):
+            raise ValueError(
+                "values must be a dictionary."
+            )
+
+        self._update_yaml_root(values)
+
+        self.data.update(values)
+
+    def _update_yaml_section(
+        self,
+        section: str,
         values: dict,
     ) -> None:
         lines = self.path.read_text(
             encoding="utf-8"
         ).splitlines()
 
-        feature_index = None
+        section_index = None
 
         for index, line in enumerate(lines):
-            if line.strip() == f"{feature_name}:":
-                feature_index = index
+            if line.strip() == f"{section}:":
+                section_index = index
                 break
 
-        if feature_index is None:
+        if section_index is None:
             raise ValueError(
-                f"Feature '{feature_name}' was not found "
-                "in config.yml."
+                f"Section '{section}' was not found "
+                f"in {self.path.name}."
             )
 
-        feature_end = len(lines)
+        section_end = len(lines)
 
         for index in range(
-            feature_index + 1,
+            section_index + 1,
             len(lines),
         ):
             line = lines[index]
@@ -83,15 +110,15 @@ class KGEssentialsConfig:
                     (" ", "\t", "#")
                 )
             ):
-                feature_end = index
+                section_end = index
                 break
 
         for key, value in values.items():
             key_index = None
 
             for index in range(
-                feature_index + 1,
-                feature_end,
+                section_index + 1,
+                section_end,
             ):
                 if lines[index].startswith(
                     f"  {key}:"
@@ -110,19 +137,73 @@ class KGEssentialsConfig:
                 continue
 
             lines.insert(
-                feature_end,
+                section_end,
                 f"  {key}: {formatted_value}",
             )
 
-            feature_end += 1
+            section_end += 1
 
+        self._write_lines(lines)
+
+    def _update_yaml_root(
+        self,
+        values: dict,
+    ) -> None:
+        lines = self.path.read_text(
+            encoding="utf-8"
+        ).splitlines()
+
+        for key, value in values.items():
+            key_index = None
+
+            for index, line in enumerate(lines):
+                if line.startswith(
+                    f"{key}:"
+                ):
+                    key_index = index
+                    break
+
+            formatted_value = self._format_yaml_value(
+                value
+            )
+
+            if key_index is not None:
+                lines[key_index] = (
+                    f"{key}: {formatted_value}"
+                )
+                continue
+
+            insert_index = len(lines)
+
+            for index, line in enumerate(lines):
+                if (
+                    line
+                    and not line.startswith(
+                        (" ", "\t", "#")
+                    )
+                ):
+                    insert_index = index
+
+            lines.insert(
+                insert_index,
+                f"{key}: {formatted_value}",
+            )
+
+        self._write_lines(lines)
+
+    def _write_lines(
+        self,
+        lines: list[str],
+    ) -> None:
         self.path.write_text(
             "\n".join(lines) + "\n",
             encoding="utf-8",
         )
 
     @staticmethod
-    def _format_yaml_value(value) -> str:
+    def _format_yaml_value(
+        value,
+    ) -> str:
         if isinstance(value, bool):
             return "true" if value else "false"
 
