@@ -79,8 +79,8 @@ class KGEssentials(Plugin):
         self._load_configuration()
         self._load_messages()
         self._initialize_handlers()
-        self._register_commands()
     
+        self._register_commands()
         self.register_events(self.rtp_handler)
     
         self.logger.info("KGEssentials enabled.")

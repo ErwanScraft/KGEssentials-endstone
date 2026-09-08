@@ -1,4 +1,6 @@
+import math
 import time
+from uuid import UUID
 
 from endstone.command import Command, CommandExecutor, CommandSender
 from endstone.event import PlayerMoveEvent, event_handler
@@ -14,8 +16,8 @@ class RtpHandler(CommandExecutor):
         self.plugin = plugin
         self.service = RtpService(plugin)
 
-        self.cooldowns: dict[str, float] = {}
-        self.warmups: dict[str, object] = {}
+        self.cooldowns: dict[UUID, float] = {}
+        self.warmups: dict[UUID, dict] = {}
 
     def on_command(
         self,
@@ -24,15 +26,14 @@ class RtpHandler(CommandExecutor):
         args: list[str],
     ) -> bool:
         if not hasattr(sender, "location"):
-            sender.send_message(
-                self.plugin.messages.get(
-                    "rtp.player-only"
-                )
+            self._send(
+                sender,
+                "callback.player_only",
             )
             return True
 
         player = sender
-        player_id = str(player.unique_id)
+        player_id = player.unique_id
 
         if player_id in self.warmups:
             return True
@@ -45,7 +46,7 @@ class RtpHandler(CommandExecutor):
             self._send(
                 player,
                 "rtp.cooldown",
-                time=self._format_time(remaining),
+                time=remaining,
             )
             return True
 
@@ -54,48 +55,45 @@ class RtpHandler(CommandExecutor):
         return True
 
     def _start_warmup(self, player) -> None:
-        player_id = str(player.unique_id)
+        player_id = player.unique_id
 
-        warmup_seconds = max(
+        warmup = max(
             0,
-            self._get_number(
+            self._get_int(
                 "rtp.warmup",
                 5,
             ),
         )
 
-        if warmup_seconds <= 0:
+        if warmup <= 0:
             self._execute_rtp(player)
             return
 
-        start_location = player.location
-
-        self._send(
-            player,
-            "rtp.warmup",
-            time=warmup_seconds,
-        )
-
         state = {
-            "location": start_location,
-            "remaining": warmup_seconds,
+            "location": player.location,
+            "remaining": warmup,
             "task": None,
         }
 
         self.warmups[player_id] = state
 
-        task = self.plugin.server.scheduler.run_task(
+        self._send(
+            player,
+            "rtp.warmup",
+            time=warmup,
+        )
+
+        state["task"] = self.plugin.server.scheduler.run_task(
             self.plugin,
-            lambda: self._warmup_tick(
-                player_id
-            ),
-            delay=0,
+            lambda: self._warmup_tick(player_id),
+            delay=20,
             period=20,
         )
 
-        state["task"] = task
-
-    def _warmup_tick(self, player_id: str) -> None:
+    def _warmup_tick(
+        self,
+        player_id: UUID,
+    ) -> None:
         state = self.warmups.get(player_id)
 
         if state is None:
@@ -106,18 +104,16 @@ class RtpHandler(CommandExecutor):
         )
 
         if player is None:
-            self._cancel_warmup(
-                player_id
-            )
+            self._cancel_warmup(player_id)
             return
 
-        if not self._is_same_position(
+        if not self._same_block_position(
             player.location,
             state["location"],
         ):
             self._cancel_warmup(
                 player_id,
-                send_message=True,
+                notify=True,
             )
             return
 
@@ -133,7 +129,10 @@ class RtpHandler(CommandExecutor):
             time=state["remaining"],
         )
 
-    def _finish_warmup(self, player_id: str) -> None:
+    def _finish_warmup(
+        self,
+        player_id: UUID,
+    ) -> None:
         state = self.warmups.pop(
             player_id,
             None,
@@ -142,7 +141,7 @@ class RtpHandler(CommandExecutor):
         if state is None:
             return
 
-        task = state.get("task")
+        task = state["task"]
 
         if task is not None:
             task.cancel()
@@ -158,8 +157,8 @@ class RtpHandler(CommandExecutor):
 
     def _cancel_warmup(
         self,
-        player_id: str,
-        send_message: bool = False,
+        player_id: UUID,
+        notify: bool = False,
     ) -> None:
         state = self.warmups.pop(
             player_id,
@@ -169,34 +168,34 @@ class RtpHandler(CommandExecutor):
         if state is None:
             return
 
-        task = state.get("task")
+        task = state["task"]
 
         if task is not None:
             task.cancel()
 
-        if send_message:
-            player = self.plugin.server.get_player(
-                player_id
+        if not notify:
+            return
+
+        player = self.plugin.server.get_player(
+            player_id
+        )
+
+        if player is not None:
+            self._send(
+                player,
+                "rtp.cancelled",
             )
 
-            if player is not None:
-                self._send(
-                    player,
-                    "rtp.cancelled",
-                )
-
     def _execute_rtp(self, player) -> None:
-        player_id = str(player.unique_id)
-
+        player_id = player.unique_id
         location = player.location
-        dimension = location.dimension
 
-        radius = self._get_number(
+        radius = self._get_int(
             "rtp.radius",
             500,
         )
 
-        attempts = self._get_number(
+        attempts = self._get_int(
             "rtp.attempts",
             32,
         )
@@ -204,7 +203,7 @@ class RtpHandler(CommandExecutor):
         blacklist_biomes = self._get_blacklist_biomes()
 
         target = self.service.find_location(
-            dimension,
+            location.dimension,
             location.x,
             location.z,
             radius,
@@ -220,27 +219,27 @@ class RtpHandler(CommandExecutor):
             return
 
         try:
-            if not player.teleport(target):
-                self._send(
-                    player,
-                    "rtp.failed",
-                )
-                return
+            success = player.teleport(target)
         except Exception as exc:
             self.plugin.logger.debug(
                 f"RTP teleport failed for "
                 f"{player.name}: {exc}"
             )
+            success = False
 
+        if not success:
             self._send(
                 player,
                 "rtp.failed",
             )
             return
 
-        cooldown = self._get_number(
-            "rtp.cooldown",
-            30,
+        cooldown = max(
+            0,
+            self._get_int(
+                "rtp.cooldown",
+                30,
+            ),
         )
 
         if cooldown > 0:
@@ -259,25 +258,25 @@ class RtpHandler(CommandExecutor):
         event: PlayerMoveEvent,
     ) -> None:
         player = event.player
-        player_id = str(player.unique_id)
+        player_id = player.unique_id
 
-        if player_id not in self.warmups:
+        state = self.warmups.get(player_id)
+
+        if state is None:
             return
 
-        state = self.warmups[player_id]
-
-        if not self._is_same_position(
+        if not self._same_block_position(
             event.to_location,
             state["location"],
         ):
             self._cancel_warmup(
                 player_id,
-                send_message=True,
+                notify=True,
             )
 
     def _get_cooldown_remaining(
         self,
-        player_id: str,
+        player_id: UUID,
     ) -> int:
         expires_at = self.cooldowns.get(
             player_id
@@ -295,7 +294,7 @@ class RtpHandler(CommandExecutor):
             )
             return 0
 
-        return math_ceil(remaining)
+        return math.ceil(remaining)
 
     def _get_blacklist_biomes(self) -> set[str]:
         configured = self.plugin.config_manager.get(
@@ -313,7 +312,7 @@ class RtpHandler(CommandExecutor):
             and value.strip()
         }
 
-    def _get_number(
+    def _get_int(
         self,
         path: str,
         default: int,
@@ -328,8 +327,8 @@ class RtpHandler(CommandExecutor):
         except (TypeError, ValueError):
             return default
 
-    def _is_same_position(
-        self,
+    @staticmethod
+    def _same_block_position(
         first,
         second,
     ) -> bool:
@@ -340,15 +339,15 @@ class RtpHandler(CommandExecutor):
             return False
 
         return (
-            math_floor(first.x)
-            == math_floor(second.x)
-            and math_floor(first.z)
-            == math_floor(second.z)
+            math.floor(first.x)
+            == math.floor(second.x)
+            and math.floor(first.z)
+            == math.floor(second.z)
         )
 
     def _send(
         self,
-        player,
+        sender,
         key: str,
         **placeholders,
     ) -> None:
@@ -358,30 +357,15 @@ class RtpHandler(CommandExecutor):
         )
 
         if message:
-            player.send_message(message)
+            sender.send_message(message)
 
     @staticmethod
     def _normalize_identifier(
         identifier: str,
     ) -> str:
-        return identifier.lower().strip().removeprefix(
-            "minecraft:"
+        return (
+            identifier
+            .lower()
+            .strip()
+            .removeprefix("minecraft:")
         )
-
-    @staticmethod
-    def _format_time(seconds: int) -> str:
-        return str(max(1, seconds))
-
-
-    def math_floor(value: float) -> int:
-        return int(value // 1)
-    
-    
-    def math_ceil(value: float) -> int:
-        value = float(value)
-        integer = int(value)
-    
-        if value == integer:
-            return integer
-    
-        return integer + 1

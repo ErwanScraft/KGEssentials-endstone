@@ -49,8 +49,11 @@ class RtpService:
     ):
         blacklist_biomes = blacklist_biomes or set()
 
+        radius = max(1.0, float(radius))
+        attempts = max(1, int(attempts))
+
         for _ in range(attempts):
-            location = self._generate_location(
+            target = self._generate_location(
                 dimension,
                 origin_x,
                 origin_z,
@@ -58,8 +61,8 @@ class RtpService:
                 blacklist_biomes,
             )
 
-            if location is not None:
-                return location
+            if target is not None:
+                return target
 
         return None
 
@@ -72,10 +75,7 @@ class RtpService:
         blacklist_biomes: set[str],
     ):
         distance = math.sqrt(
-            random.uniform(
-                0.0,
-                radius * radius,
-            )
+            random.uniform(0.0, radius * radius)
         )
 
         angle = random.uniform(
@@ -83,23 +83,24 @@ class RtpService:
             math.tau,
         )
 
-        x = origin_x + math.cos(angle) * distance
-        z = origin_z + math.sin(angle) * distance
+        block_x = math.floor(
+            origin_x + math.cos(angle) * distance
+        )
 
-        block_x = math.floor(x)
-        block_z = math.floor(z)
+        block_z = math.floor(
+            origin_z + math.sin(angle) * distance
+        )
 
         try:
-            ground_y = dimension.get_highest_block_y_at(
+            ground = dimension.get_highest_block_at(
                 block_x,
                 block_z,
             )
 
-            ground = dimension.get_block_at(
-                block_x,
-                ground_y,
-                block_z,
-            )
+            if ground is None:
+                return None
+
+            ground_y = ground.y
 
             feet = dimension.get_block_at(
                 block_x,
@@ -112,6 +113,7 @@ class RtpService:
                 ground_y + 2,
                 block_z,
             )
+
         except Exception as exc:
             self.plugin.logger.debug(
                 f"RTP location check failed at "
@@ -119,14 +121,7 @@ class RtpService:
             )
             return None
 
-        if any(
-            block is None
-            for block in (
-                ground,
-                feet,
-                head,
-            )
-        ):
+        if feet is None or head is None:
             return None
 
         ground_type = self._block_type(ground)
@@ -148,14 +143,6 @@ class RtpService:
         ):
             return None
 
-        if not self._is_safe_landing(
-            dimension,
-            block_x,
-            ground_y,
-            block_z,
-        ):
-            return None
-
         return Location(
             dimension,
             block_x + 0.5,
@@ -168,76 +155,23 @@ class RtpService:
     @classmethod
     def _is_valid_biome(
         cls,
-        ground,
+        block,
         blacklist_biomes: set[str],
     ) -> bool:
         if not blacklist_biomes:
             return True
 
         try:
-            biome = ground.biome
+            biome = block.biome
 
             if biome is None:
                 return True
 
-            biome_id = getattr(
-                biome,
-                "id",
-                "",
+            biome_id = cls._normalize_identifier(
+                biome.id
             )
 
-            biome_name = cls._normalize_identifier(
-                biome_id
-            )
-
-            return biome_name not in blacklist_biomes
-
-        except Exception:
-            # Biome information must not make RTP unusable.
-            return True
-
-    @classmethod
-    def _is_safe_landing(
-        cls,
-        dimension,
-        block_x: int,
-        ground_y: int,
-        block_z: int,
-    ) -> bool:
-        try:
-            neighbors = (
-                (block_x + 1, block_z),
-                (block_x - 1, block_z),
-                (block_x, block_z + 1),
-                (block_x, block_z - 1),
-            )
-
-            for neighbor_x, neighbor_z in neighbors:
-                neighbor_ground_y = (
-                    dimension.get_highest_block_y_at(
-                        neighbor_x,
-                        neighbor_z,
-                    )
-                )
-
-                if neighbor_ground_y < ground_y - 1:
-                    continue
-
-                block = dimension.get_block_at(
-                    neighbor_x,
-                    ground_y,
-                    neighbor_z,
-                )
-
-                if block is None:
-                    continue
-
-                block_type = cls._block_type(block)
-
-                if block_type in cls._DANGEROUS_BLOCKS:
-                    return False
-
-            return True
+            return biome_id not in blacklist_biomes
 
         except Exception:
             return True
@@ -291,8 +225,6 @@ class RtpService:
 
     @staticmethod
     def _normalize_identifier(identifier) -> str:
-        value = str(identifier).lower().strip()
-
-        return value.removeprefix(
+        return str(identifier).lower().strip().removeprefix(
             "minecraft:"
         )
