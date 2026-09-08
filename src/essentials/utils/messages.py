@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import yaml
 
 
@@ -9,9 +7,7 @@ class KGEssentialsMessages:
         self.data: dict = {}
 
     def load(self) -> None:
-        path = Path(
-            self.plugin.data_folder
-        ) / "message.yml"
+        path = self.plugin.data_folder / "message.yml"
 
         with path.open(
             "r",
@@ -30,6 +26,7 @@ class KGEssentialsMessages:
         self,
         key: str,
         default: str = "",
+        **placeholders,
     ) -> str:
         value = self.data
 
@@ -45,24 +42,15 @@ class KGEssentialsMessages:
         if not isinstance(value, str):
             return default
 
-        return value
-
-    def format(
-        self,
-        key: str,
-        **kwargs,
-    ) -> str:
-        message = self.get(key)
-
-        if not message:
-            return ""
-
         values = {
             "prefix": self.plugin.config_manager.get(
                 "prefix",
                 "KGEssentials",
             ),
-            **kwargs,
+            **placeholders,
         }
 
-        return message.format(**values)
+        try:
+            return value.format(**values)
+        except (KeyError, ValueError):
+            return value

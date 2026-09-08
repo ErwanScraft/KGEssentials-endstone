@@ -77,7 +77,7 @@ class RtpHandler(CommandExecutor):
 
         self.warmups[player_id] = state
 
-        self._send(
+        self._send_actionbar(
             player,
             "rtp.warmup",
             time=warmup,
@@ -123,7 +123,7 @@ class RtpHandler(CommandExecutor):
             self._finish_warmup(player_id)
             return
 
-        self._send(
+        self._send_actionbar(
             player,
             "rtp.warmup",
             time=state["remaining"],
@@ -358,6 +358,20 @@ class RtpHandler(CommandExecutor):
 
         if message:
             sender.send_message(message)
+
+    def _send_actionbar(
+        self,
+        player,
+        key: str,
+        **placeholders,
+    ) -> None:
+        message = self.plugin.messages.get(
+            key,
+            **placeholders,
+        )
+
+        if message:
+            player.send_tip(message)
 
     @staticmethod
     def _normalize_identifier(

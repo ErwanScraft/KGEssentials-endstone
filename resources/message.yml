@@ -16,7 +16,7 @@ spawn:
   cooldown: "{prefix} §7Please wait §f{time}s§7 before using §f/spawn§7 again."
 
 rtp:
-  warmup: "{prefix} §7Teleporting in §f{time}s§7. Don't move."
+  warmup: "§eRandom teleport in §f{time}s§e..."
   cancelled: "{prefix} §cTeleport cancelled because you moved."
   teleported: "{prefix} §aYou have been randomly teleported."
   failed: "{prefix} §cUnable to find a safe location. Please try again."
