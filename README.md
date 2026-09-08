@@ -14,5 +14,6 @@ KGEssentials adalah plugin **Endstone** yang menyediakan berbagai utilitas esens
 - Perintah gamemode: `/gmc`, `/gms`, `/gma`, dan `/gmsp`
 - Perintah `/spawn` untuk teleport ke spawn server
 - Perintah `/setspawn` untuk mengatur lokasi spawn KGEssentials
+- Perintah `/rtp` untuk teleport ke lokasi acak yang aman
 - Sistem konfigurasi dan pesan berbasis YAML
 - Sistem permission untuk setiap fitur

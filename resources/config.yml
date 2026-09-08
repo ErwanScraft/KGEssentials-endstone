@@ -8,3 +8,13 @@ prefix: "KGEssentials"
 spawn:
   # Cooldown for /spawn in seconds.
   cooldown: 10
+
+rtp:
+  # Maximum teleport radius from the player's current location.
+  radius: 500
+
+  # Maximum attempts to find a safe location.
+  attempts: 16
+
+  # Cooldown for /rtp in seconds.
+  cooldown: 30

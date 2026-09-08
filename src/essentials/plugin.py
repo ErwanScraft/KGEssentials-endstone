@@ -6,6 +6,7 @@ from .utils.messages import KGEssentialsMessages
 
 from .features.gamemode.handler import GamemodeHandler
 from .features.spawn.handler import SpawnHandler
+from .features.rtp.handler import RtpHandler
 
 
 class KGEssentials(Plugin):
@@ -47,6 +48,11 @@ class KGEssentials(Plugin):
             "usages": ["/setspawn"],
             "permissions": ["kgessentials.setspawn"],
         },
+        "rtp": {
+            "description": "Teleport to a random safe location.",
+            "usages": ["/rtp"],
+            "permissions": ["kgessentials.rtp"],
+        },
     }
 
     permissions = {
@@ -61,6 +67,10 @@ class KGEssentials(Plugin):
         "kgessentials.setspawn": {
             "description": "Allows setting the KGEssentials spawn.",
             "default": "op",
+        },
+        "kgessentials.rtp": {
+            "description": "Allows the use of the random teleport command.",
+            "default": "true",
         },
     }
 
@@ -89,6 +99,7 @@ class KGEssentials(Plugin):
     
         self.gamemode_handler = GamemodeHandler(self)
         self.spawn_handler = SpawnHandler(self)
+        self.rtp_handler = RtpHandler(self)
     
         for command_name in (
             "gmc",
@@ -104,6 +115,7 @@ class KGEssentials(Plugin):
         for command_name in (
             "spawn",
             "setspawn",
+            "rtp",
         ):
             command = self.get_command(command_name)
     

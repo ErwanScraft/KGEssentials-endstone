@@ -14,3 +14,8 @@ spawn:
   set: "{prefix} §aServer spawn has been set."
   teleported: "{prefix} §aYou have been teleported to spawn."
   cooldown: "{prefix} §7Please wait §f{time}s §7before using §f/spawn§7 again."
+
+rtp:
+  teleported: "{prefix} §aYou have been randomly teleported."
+  failed: "{prefix} §cUnable to find a safe location. Please try again."
+  cooldown: "{prefix} §7Please wait §f{time}s §7before using §f/rtp§7 again."
