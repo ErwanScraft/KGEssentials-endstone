@@ -137,6 +137,14 @@ class RtpService:
         if not self._is_passable(head_type):
             return None
 
+        if not self._is_safe_landing(
+            dimension,
+            block_x,
+            ground_y,
+            block_z,
+        ):
+            return None
+
         return Location(
             dimension,
             block_x + 0.5,
@@ -145,6 +153,62 @@ class RtpService:
             0.0,
             0.0,
         )
+
+    @classmethod
+    def _is_safe_landing(
+        cls,
+        dimension,
+        block_x: int,
+        ground_y: int,
+        block_z: int,
+    ) -> bool:
+        """
+        Validate that the selected landing block has
+        stable terrain immediately around the player.
+
+        This is intentionally lightweight. It does not
+        require every neighboring block to be identical
+        or solid, only that the player is not landing on
+        an exposed edge or dangerous terrain.
+        """
+
+        try:
+            neighbors = (
+                (block_x + 1, block_z),
+                (block_x - 1, block_z),
+                (block_x, block_z + 1),
+                (block_x, block_z - 1),
+            )
+
+            for neighbor_x, neighbor_z in neighbors:
+                neighbor_ground_y = (
+                    dimension.get_highest_block_y_at(
+                        neighbor_x,
+                        neighbor_z,
+                    )
+                )
+
+                if neighbor_ground_y < ground_y - 1:
+                    continue
+
+                block = dimension.get_block_at(
+                    neighbor_x,
+                    ground_y,
+                    neighbor_z,
+                )
+
+                if block is None:
+                    continue
+
+                block_type = cls._block_type(block)
+
+                if block_type in cls._DANGEROUS_BLOCKS:
+                    return False
+
+            return True
+
+        except Exception:
+            return True
 
     @classmethod
     def _is_valid_ground(
@@ -176,10 +240,7 @@ class RtpService:
         if block_type in cls._AIR_BLOCKS:
             return True
 
-        if block_type in cls._PASSABLE_BLOCKS:
-            return True
-
-        return False
+        return block_type in cls._PASSABLE_BLOCKS
 
     @staticmethod
     def _block_type(block) -> str:
