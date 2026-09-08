@@ -83,6 +83,11 @@ class RtpHandler(CommandExecutor):
             time=warmup,
         )
 
+        self._play_sound(
+            player,
+            "rtp.sounds.countdown",
+        )
+
         state["task"] = self.plugin.server.scheduler.run_task(
             self.plugin,
             lambda: self._warmup_tick(player_id),
@@ -127,6 +132,11 @@ class RtpHandler(CommandExecutor):
             player,
             "rtp.warmup",
             time=state["remaining"],
+        )
+
+        self._play_sound(
+            player,
+            "rtp.sounds.countdown",
         )
 
     def _finish_warmup(
@@ -180,11 +190,18 @@ class RtpHandler(CommandExecutor):
             player_id
         )
 
-        if player is not None:
-            self._send(
-                player,
-                "rtp.cancelled",
-            )
+        if player is None:
+            return
+
+        self._send(
+            player,
+            "rtp.cancelled",
+        )
+
+        self._play_sound(
+            player,
+            "rtp.sounds.cancelled",
+        )
 
     def _execute_rtp(self, player) -> None:
         player_id = player.unique_id
@@ -216,6 +233,12 @@ class RtpHandler(CommandExecutor):
                 player,
                 "rtp.failed",
             )
+
+            self._play_sound(
+                player,
+                "rtp.sounds.failed",
+            )
+
             return
 
         try:
@@ -232,6 +255,12 @@ class RtpHandler(CommandExecutor):
                 player,
                 "rtp.failed",
             )
+
+            self._play_sound(
+                player,
+                "rtp.sounds.failed",
+            )
+
             return
 
         cooldown = max(
@@ -251,6 +280,47 @@ class RtpHandler(CommandExecutor):
             player,
             "rtp.teleported",
         )
+
+        self._play_sound(
+            player,
+            "rtp.sounds.success",
+        )
+
+    def _play_sound(
+        self,
+        player,
+        path: str,
+    ) -> None:
+        sound = self.plugin.config_manager.get(
+            f"{path}.sound",
+            "",
+        )
+
+        if not isinstance(sound, str) or not sound.strip():
+            return
+
+        volume = self._get_float(
+            f"{path}.volume",
+            1.0,
+        )
+
+        pitch = self._get_float(
+            f"{path}.pitch",
+            1.0,
+        )
+
+        try:
+            player.play_sound(
+                player.location,
+                sound,
+                volume,
+                pitch,
+            )
+        except Exception as exc:
+            self.plugin.logger.debug(
+                f"RTP sound failed for "
+                f"{player.name}: {exc}"
+            )
 
     @event_handler
     def on_player_move(
@@ -324,6 +394,21 @@ class RtpHandler(CommandExecutor):
 
         try:
             return int(value)
+        except (TypeError, ValueError):
+            return default
+
+    def _get_float(
+        self,
+        path: str,
+        default: float,
+    ) -> float:
+        value = self.plugin.config_manager.get(
+            path,
+            default,
+        )
+
+        try:
+            return float(value)
         except (TypeError, ValueError):
             return default
 

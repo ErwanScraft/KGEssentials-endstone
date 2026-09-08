@@ -2,30 +2,60 @@
 # KGEssentials Configuration
 # ==================================================
 
-# Plugin prefix used in messages.
+# Prefix used by KGEssentials messages.
 prefix: "KGEssentials"
 
 spawn:
   # Cooldown for /spawn in seconds.
   cooldown: 10
-
-# Random teleportation settings.
+  
 rtp:
-  # Maximum teleportation radius from the player's current position.
+  # Maximum teleport distance from the player's
+  # current position.
   radius: 500
 
-  # Number of location attempts before RTP fails.
+  # Maximum location attempts before RTP fails.
   attempts: 32
 
-  # Cooldown between RTP uses, in seconds.
+  # Cooldown between successful RTP uses (seconds).
   cooldown: 30
 
-  # Delay before teleportation, in seconds.
-  # Movement during warmup cancels the teleport.
+  # Delay before teleporting (seconds).
+  # Movement during the warmup cancels the teleport.
   warmup: 5
 
-  # Biomes where RTP locations are not allowed.
+  # Biomes that cannot be selected as RTP locations.
+  # Use an empty list to allow all biomes.
   blacklist-biomes:
     - ocean
     - deep_ocean
     - frozen_ocean
+
+  # RTP sound effects.
+  sounds:
+
+    # Played every second during the warmup.
+    countdown:
+      sound: "note.hat"
+      volume: 0.25
+      pitch: 1.20
+
+    # Played after a successful teleport.
+    success:
+      sound: "mob.endermen.portal"
+      volume: 1.00
+      pitch: 1.00
+
+    # Played when no safe location is found
+    # or the teleport operation fails.
+    failed:
+      sound: "note.bass"
+      volume: 0.70
+      pitch: 0.80
+
+    # Played when the warmup is cancelled
+    # because the player moves.
+    cancelled:
+      sound: "note.bass"
+      volume: 0.50
+      pitch: 0.60
