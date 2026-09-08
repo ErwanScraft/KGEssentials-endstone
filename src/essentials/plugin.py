@@ -12,7 +12,7 @@ from .features.rtp.handler import RtpHandler
 class KGEssentials(Plugin):
     api_version = "0.11"
 
-    version = "0.1.0"
+    version = "0.2.0"
     authors = ["ErwanScraft"]
     description = "Essential utilities for Endstone servers."
     prefix = "KGEssentials"
@@ -44,7 +44,7 @@ class KGEssentials(Plugin):
             "permissions": ["kgessentials.spawn"],
         },
         "setspawn": {
-            "description": "Set the KGEssentials spawn to your current location.",
+            "description": "Set the KGEssentials spawn.",
             "usages": ["/setspawn"],
             "permissions": ["kgessentials.setspawn"],
         },
@@ -75,54 +75,77 @@ class KGEssentials(Plugin):
     }
 
     def on_enable(self) -> None:
+        self._load_resources()
+        self._load_configuration()
+        self._load_messages()
+        self._initialize_handlers()
+        self._register_commands()
+
+        self.logger.info("KGEssentials enabled.")
+
+    def _load_resources(self) -> None:
         self.save_resources("config.yml")
         self.save_resources("message.yml")
         self.save_resources("data/spawn.yml")
-    
+
+    def _load_configuration(self) -> None:
         self.config_manager = ConfigManager(self)
         self.config_manager.load()
-        
+
         self.spawn_data = ConfigManager(
             self,
             "data/spawn.yml",
         )
         self.spawn_data.load()
-        
-        self._messages = KGEssentialsMessages(self)
-        self._messages.load()
-        self.messages = self._messages
-        
+
         self.prefix = self.config_manager.get(
             "prefix",
             "KGEssentials",
         )
-    
+
+    def _load_messages(self) -> None:
+        self.messages = KGEssentialsMessages(self)
+        self.messages.load()
+
+    def _initialize_handlers(self) -> None:
         self.gamemode_handler = GamemodeHandler(self)
         self.spawn_handler = SpawnHandler(self)
         self.rtp_handler = RtpHandler(self)
-    
-        for command_name in (
-            "gmc",
-            "gms",
-            "gma",
-            "gmsp",
-        ):
+
+    def _register_commands(self) -> None:
+        self._register_handler(
+            (
+                "gmc",
+                "gms",
+                "gma",
+                "gmsp",
+            ),
+            self.gamemode_handler,
+        )
+
+        self._register_handler(
+            (
+                "spawn",
+                "setspawn",
+            ),
+            self.spawn_handler,
+        )
+
+        self._register_handler(
+            ("rtp",),
+            self.rtp_handler,
+        )
+
+    def _register_handler(
+        self,
+        command_names: tuple[str, ...],
+        handler,
+    ) -> None:
+        for command_name in command_names:
             command = self.get_command(command_name)
-    
+
             if command is not None:
-                command.executor = self.gamemode_handler
-    
-        for command_name in (
-            "spawn",
-            "setspawn",
-            "rtp",
-        ):
-            command = self.get_command(command_name)
-    
-            if command is not None:
-                command.executor = self.spawn_handler
-    
-        self.logger.info("KGEssentials enabled.")
+                command.executor = handler
 
     def on_command(
         self,
