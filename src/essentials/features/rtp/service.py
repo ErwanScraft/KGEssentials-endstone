@@ -45,13 +45,17 @@ class RtpService:
         origin_z: float,
         radius: float,
         attempts: int,
+        blacklist_biomes: set[str] | None = None,
     ):
+        blacklist_biomes = blacklist_biomes or set()
+
         for _ in range(attempts):
             location = self._generate_location(
                 dimension,
                 origin_x,
                 origin_z,
                 radius,
+                blacklist_biomes,
             )
 
             if location is not None:
@@ -65,6 +69,7 @@ class RtpService:
         origin_x: float,
         origin_z: float,
         radius: float,
+        blacklist_biomes: set[str],
     ):
         distance = math.sqrt(
             random.uniform(
@@ -137,6 +142,12 @@ class RtpService:
         if not self._is_passable(head_type):
             return None
 
+        if not self._is_valid_biome(
+            ground,
+            blacklist_biomes,
+        ):
+            return None
+
         if not self._is_safe_landing(
             dimension,
             block_x,
@@ -155,6 +166,37 @@ class RtpService:
         )
 
     @classmethod
+    def _is_valid_biome(
+        cls,
+        ground,
+        blacklist_biomes: set[str],
+    ) -> bool:
+        if not blacklist_biomes:
+            return True
+
+        try:
+            biome = ground.biome
+
+            if biome is None:
+                return True
+
+            biome_id = getattr(
+                biome,
+                "id",
+                "",
+            )
+
+            biome_name = cls._normalize_identifier(
+                biome_id
+            )
+
+            return biome_name not in blacklist_biomes
+
+        except Exception:
+            # Biome information must not make RTP unusable.
+            return True
+
+    @classmethod
     def _is_safe_landing(
         cls,
         dimension,
@@ -162,16 +204,6 @@ class RtpService:
         ground_y: int,
         block_z: int,
     ) -> bool:
-        """
-        Validate that the selected landing block has
-        stable terrain immediately around the player.
-
-        This is intentionally lightweight. It does not
-        require every neighboring block to be identical
-        or solid, only that the player is not landing on
-        an exposed edge or dangerous terrain.
-        """
-
         try:
             neighbors = (
                 (block_x + 1, block_z),
@@ -256,3 +288,11 @@ class RtpService:
         return block_type.removeprefix(
             "minecraft:"
         ).lower()
+
+    @staticmethod
+    def _normalize_identifier(identifier) -> str:
+        value = str(identifier).lower().strip()
+
+        return value.removeprefix(
+            "minecraft:"
+        )

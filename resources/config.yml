@@ -9,12 +9,23 @@ spawn:
   # Cooldown for /spawn in seconds.
   cooldown: 10
 
+# Random teleportation settings.
 rtp:
-  # Maximum teleport radius from the player's current location.
+  # Maximum teleportation radius from the player's current position.
   radius: 500
 
-  # Maximum attempts to find a safe location.
+  # Number of location attempts before RTP fails.
   attempts: 32
 
-  # Cooldown for /rtp in seconds.
+  # Cooldown between RTP uses, in seconds.
   cooldown: 30
+
+  # Delay before teleportation, in seconds.
+  # Movement during warmup cancels the teleport.
+  warmup: 5
+
+  # Biomes where RTP locations are not allowed.
+  blacklist-biomes:
+    - ocean
+    - deep_ocean
+    - frozen_ocean
