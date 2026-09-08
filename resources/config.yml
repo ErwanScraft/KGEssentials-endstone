@@ -14,7 +14,7 @@ rtp:
   radius: 500
 
   # Maximum attempts to find a safe location.
-  attempts: 16
+  attempts: 32
 
   # Cooldown for /rtp in seconds.
   cooldown: 30

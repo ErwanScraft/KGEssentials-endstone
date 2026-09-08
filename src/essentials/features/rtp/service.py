@@ -25,7 +25,7 @@ class RtpService:
         "void_air",
     }
 
-    _NON_SOLID_GROUND = {
+    _PASSABLE_BLOCKS = {
         "short_grass",
         "tall_grass",
         "fern",
@@ -33,17 +33,6 @@ class RtpService:
         "vine",
         "glow_lichen",
         "snow_layer",
-        "leaves",
-        "oak_leaves",
-        "spruce_leaves",
-        "birch_leaves",
-        "jungle_leaves",
-        "acacia_leaves",
-        "dark_oak_leaves",
-        "mangrove_leaves",
-        "cherry_leaves",
-        "azalea_leaves",
-        "flowering_azalea_leaves",
     }
 
     def __init__(self, plugin) -> None:
@@ -107,12 +96,6 @@ class RtpService:
                 block_z,
             )
 
-            below = dimension.get_block_at(
-                block_x,
-                ground_y - 1,
-                block_z,
-            )
-
             feet = dimension.get_block_at(
                 block_x,
                 ground_y + 1,
@@ -135,7 +118,6 @@ class RtpService:
             block is None
             for block in (
                 ground,
-                below,
                 feet,
                 head,
             )
@@ -143,30 +125,16 @@ class RtpService:
             return None
 
         ground_type = self._block_type(ground)
-        below_type = self._block_type(below)
         feet_type = self._block_type(feet)
         head_type = self._block_type(head)
 
-        # Ground must be a real solid block.
         if not self._is_valid_ground(ground_type):
             return None
 
-        # Reject dangerous blocks below the player.
-        if below_type in self._DANGEROUS_BLOCKS:
-            return None
-
-        # Player's body must have two clear blocks.
         if not self._is_passable(feet_type):
             return None
 
         if not self._is_passable(head_type):
-            return None
-
-        # Prevent spawning directly above dangerous blocks.
-        if feet_type in self._DANGEROUS_BLOCKS:
-            return None
-
-        if head_type in self._DANGEROUS_BLOCKS:
             return None
 
         return Location(
@@ -192,9 +160,6 @@ class RtpService:
         if block_type in cls._DANGEROUS_BLOCKS:
             return False
 
-        if block_type in cls._NON_SOLID_GROUND:
-            return False
-
         if block_type.endswith("_leaves"):
             return False
 
@@ -205,18 +170,16 @@ class RtpService:
         cls,
         block_type: str,
     ) -> bool:
+        if not block_type:
+            return False
+
         if block_type in cls._AIR_BLOCKS:
             return True
 
-        return block_type in {
-            "short_grass",
-            "tall_grass",
-            "fern",
-            "large_fern",
-            "vine",
-            "glow_lichen",
-            "snow_layer",
-        }
+        if block_type in cls._PASSABLE_BLOCKS:
+            return True
+
+        return False
 
     @staticmethod
     def _block_type(block) -> str:
