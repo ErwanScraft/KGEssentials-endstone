@@ -23,7 +23,7 @@ class SpawnHandler(CommandExecutor):
     ) -> bool:
         if not isinstance(sender, Player):
             sender.send_message(
-                self.plugin.messages.format("callback.player_only")
+                self.plugin.messages.get("callback.player_only")
             )
             return False
 
@@ -53,7 +53,7 @@ class SpawnHandler(CommandExecutor):
         )
 
         player.send_message(
-            self.plugin.messages.format(
+            self.plugin.messages.get(
                 "spawn.set"
             )
         )
@@ -76,7 +76,7 @@ class SpawnHandler(CommandExecutor):
             or not dimension_name
         ):
             player.send_message(
-                self.plugin.messages.format(
+                self.plugin.messages.get(
                     "spawn.unavailable"
                 )
             )
@@ -116,7 +116,7 @@ class SpawnHandler(CommandExecutor):
             ValueError,
         ):
             player.send_message(
-                self.plugin.messages.format(
+                self.plugin.messages.get(
                     "spawn.unavailable"
                 )
             )
@@ -143,7 +143,7 @@ class SpawnHandler(CommandExecutor):
 
             if remaining > 0:
                 player.send_message(
-                    self.plugin.messages.format(
+                    self.plugin.messages.get(
                         "spawn.cooldown",
                         time=max(1, round(remaining)),
                     )
@@ -152,7 +152,7 @@ class SpawnHandler(CommandExecutor):
 
         if not player.teleport(location):
             player.send_message(
-                self.plugin.messages.format(
+                self.plugin.messages.get(
                     "spawn.unavailable"
                 )
             )
@@ -162,7 +162,7 @@ class SpawnHandler(CommandExecutor):
             self._cooldowns[player_id] = time.monotonic()
 
         player.send_message(
-            self.plugin.messages.format(
+            self.plugin.messages.get(
                 "spawn.teleported"
             )
         )
