@@ -72,6 +72,10 @@ class KGEssentials(Plugin):
             "description": "Allows the use of the random teleport command.",
             "default": "true",
         },
+        "kgessentials.rtp.cooldown.bypass": {
+            "description": "Allows bypassing the RTP cooldown.",
+            "default": "op",
+        },
     }
 
     def on_enable(self) -> None:
@@ -84,6 +88,10 @@ class KGEssentials(Plugin):
         self.register_events(self.rtp_handler)
     
         self.logger.info("KGEssentials enabled.")
+    
+    def on_disable(self) -> None:
+        if hasattr(self, "rtp_handler"):
+            self.rtp_handler.shutdown()
 
     def _load_resources(self) -> None:
         self.save_resources("config.yml")

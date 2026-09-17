@@ -4,8 +4,8 @@ KGEssentials adalah plugin **Endstone** yang menyediakan berbagai utilitas esens
 
 ## Informasi
 
-- **Endstone:** v0.11.10
-- **Versi Plugin:** v0.1.0
+- **Endstone:** v0.11.11
+- **Versi Plugin:** v0.2.0
 - **Bahasa:** Python
 - **Lisensi:** MIT
 

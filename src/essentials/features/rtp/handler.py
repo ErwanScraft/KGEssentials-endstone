@@ -6,6 +6,8 @@ from endstone.command import Command, CommandExecutor, CommandSender
 from endstone.event import PlayerMoveEvent, event_handler
 from endstone.plugin import Plugin
 
+from endstone import Player
+
 from .service import RtpService
 
 
@@ -25,23 +27,24 @@ class RtpHandler(CommandExecutor):
         command: Command,
         args: list[str],
     ) -> bool:
-        if not hasattr(sender, "location"):
+        if not isinstance(sender, Player):
             self._send(
                 sender,
                 "callback.player_only",
             )
-            return True
-
+            return False
+        
         player = sender
         player_id = player.unique_id
 
         if player_id in self.warmups:
             return True
 
+        if not self._has_cooldown_bypass(player):
         remaining = self._get_cooldown_remaining(
             player_id
         )
-
+    
         if remaining > 0:
             self._send(
                 player,
@@ -69,8 +72,14 @@ class RtpHandler(CommandExecutor):
             self._execute_rtp(player)
             return
 
+        location = player.location
+        
         state = {
-            "location": player.location,
+            "location": (
+                location.dimension,
+                math.floor(location.x),
+                math.floor(location.z),
+            ),
             "remaining": warmup,
             "task": None,
         }
@@ -207,10 +216,7 @@ class RtpHandler(CommandExecutor):
         player_id = player.unique_id
         location = player.location
 
-        radius = self._get_int(
-            "rtp.radius",
-            500,
-        )
+        radius = self._get_player_radius(player)
 
         attempts = self._get_int(
             "rtp.attempts",
@@ -263,6 +269,7 @@ class RtpHandler(CommandExecutor):
 
             return
 
+        if not self._has_cooldown_bypass(player):
         cooldown = max(
             0,
             self._get_int(
@@ -270,7 +277,7 @@ class RtpHandler(CommandExecutor):
                 30,
             ),
         )
-
+    
         if cooldown > 0:
             self.cooldowns[player_id] = (
                 time.monotonic() + cooldown
@@ -336,13 +343,54 @@ class RtpHandler(CommandExecutor):
             return
 
         if not self._same_block_position(
-            event.to_location,
+            player.location,
             state["location"],
         ):
             self._cancel_warmup(
                 player_id,
                 notify=True,
             )
+            
+    def _has_cooldown_bypass(self, player) -> bool:
+        return player.has_permission(
+            "kgessentials.rtp.cooldown.bypass"
+        )
+
+    def _get_player_radius(self, player) -> int:
+        default_radius = max(
+            0,
+            self._get_int(
+                "rtp.radius",
+                500,
+            ),
+        )
+
+        configured = self.plugin.config_manager.get(
+            "rtp.radius-permissions",
+            {},
+        )
+
+        if not isinstance(configured, dict):
+            return default_radius
+
+        radius = default_radius
+
+        for permission, value in configured.items():
+            if not isinstance(permission, str):
+                continue
+
+            try:
+                configured_radius = int(value)
+            except (TypeError, ValueError):
+                continue
+
+            if configured_radius <= radius:
+                continue
+
+            if player.has_permission(permission):
+                radius = configured_radius
+
+        return radius
 
     def _get_cooldown_remaining(
         self,
@@ -411,23 +459,31 @@ class RtpHandler(CommandExecutor):
             return float(value)
         except (TypeError, ValueError):
             return default
+    
+    def shutdown(self) -> None:
+        for state in self.warmups.values():
+            task = state.get("task")
+    
+            if task is not None:
+                task.cancel()
+    
+        self.warmups.clear()
+        self.cooldowns.clear()
 
     @staticmethod
     def _same_block_position(
-        first,
-        second,
+        location,
+        snapshot,
     ) -> bool:
-        if first is None or second is None:
+        if location is None or snapshot is None:
             return False
-
-        if first.dimension != second.dimension:
-            return False
-
+    
+        dimension, x, z = snapshot
+    
         return (
-            math.floor(first.x)
-            == math.floor(second.x)
-            and math.floor(first.z)
-            == math.floor(second.z)
+            location.dimension == dimension
+            and math.floor(location.x) == x
+            and math.floor(location.z) == z
         )
 
     def _send(
@@ -468,3 +524,4 @@ class RtpHandler(CommandExecutor):
             .strip()
             .removeprefix("minecraft:")
         )
+    

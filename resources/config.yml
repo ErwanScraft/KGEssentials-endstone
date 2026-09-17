@@ -10,8 +10,8 @@ spawn:
   cooldown: 10
   
 rtp:
-  # Maximum teleport distance from the player's
-  # current position.
+  # Default maximum teleport distance.
+  # Used when the player has no radius permission.
   radius: 500
 
   # Maximum location attempts before RTP fails.
@@ -23,6 +23,13 @@ rtp:
   # Delay before teleporting (seconds).
   # Movement during the warmup cancels the teleport.
   warmup: 5
+
+  # Radius granted by permission.
+  # The highest radius permission owned by the player is used.
+  radius-permissions:
+    "kgessentials.rtp.radius.1000": 1000
+    "kgessentials.rtp.radius.2500": 2500
+    "kgessentials.rtp.radius.5000": 5000
 
   # Biomes that cannot be selected as RTP locations.
   # Use an empty list to allow all biomes.
